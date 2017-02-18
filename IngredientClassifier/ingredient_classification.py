@@ -59,7 +59,7 @@ def convert_to_final(base_ingredient):
     if 'color' in base_ingredient:
         return [{'Name' : base_ingredient['name'], 'ID' : base_ingredient['id'], 'Color' : base_ingredient['color'], 'Category' : base_ingredient['category'], 'BaseID' : base_ingredient['id']}] +\
                [make_final_dict(base_ingredient['id'], base_ingredient['category'], base_ingredient['color'], related) for related in base_ingredient['relatedIngredients']]
-    return [make_final_dict(base_ingredient['id'], base_ingredient['category'], "", related) for related in base_ingredient['relatedIngredients']]
+    return [{'Name' : base_ingredient['name'], 'ID' : base_ingredient['id'], 'Category' : base_ingredient['category'], 'BaseID' : base_ingredient['id']}] + [make_final_dict(base_ingredient['id'], base_ingredient['category'], "", related) for related in base_ingredient['relatedIngredients']]
 
 
 neutral_spirits = get_with_keywords(['gin', 'vodka', 'jenever'])
@@ -147,6 +147,9 @@ alcohols = rum + whiskies + liqueurs_and_schnapps + neutral_spirits + wine + bra
 soda = get_with_keywords(['soda', 'coke', 'grenadine'])
 soda = add_color(soda, 'dark red')
 
+water = get_all_with_keyword('water')
+water = add_color(water, 'light blue')
+
 kool_aide = get_with_keywords(['aide', 'aid'])
 kool_aide = add_color(kool_aide, 'red')
 
@@ -189,7 +192,7 @@ sprite = add_color(sprite, 'light blue')
 tonic = get_all_with_keyword('tonic')
 tonic = add_color(tonic, 'light blue')
 
-mixers = soda + kool_aide + juice + mixes + milk + nectar + cream + hot_chocolate + ginger_shit + tea + soft_cider + lemonade + mello_yello + tonic + sprite
+mixers = soda + kool_aide + juice + mixes + milk + nectar + cream + hot_chocolate + ginger_shit + tea + soft_cider + lemonade + mello_yello + tonic + sprite + water
 mixers = [ing for ing in mixers if ing not in alcohols]
 
 others = [ing for ing in filtered if (ing not in mixers and ing not in alcohols)]
