@@ -1,20 +1,31 @@
 import json
 
-with open('all-ingredients.json') as data_file:
+with open('final_ingredients.json') as data_file:
     data = json.load(data_file)
 
-filtered = [ing for ing in data if 'Name' in ing]
+filtered = [ing for ing in data if 'name' in ing]
+
+
+def keyword_in_related(keyword, related_ingredients):
+    for ingredient in related_ingredients:
+        if keyword in ingredient['name'].lower():
+            return True
+    return False
+
 
 def keyword_in_name(ingredient, keyword):
-    if keyword in ingredient['Name'].lower():
+    if keyword in ingredient['name'].lower():
         return True
-    return False
+    return keyword_in_related(keyword, ingredient['relatedIngredients'])
+
 
 def ingredients_with_keyword(ingredients, keyword):
     return [ingredient for ingredient in ingredients if keyword_in_name(ingredient, keyword)]
 
+
 def get_all_with_keyword(keyword):
     return ingredients_with_keyword(filtered, keyword)
+
 
 def get_with_keywords(words):
     all_ingredients = list()
@@ -22,31 +33,40 @@ def get_with_keywords(words):
         all_ingredients = all_ingredients + get_all_with_keyword(word)
     return all_ingredients
 
+
 def add_color(ingredients, color):
     for ing in ingredients:
-        ing.update({'Color': color})
+        ing.update({'color': color})
     return ingredients
+
 
 def add_category(ingredients, category):
     for ing in ingredients:
-        ing.update({'Category' : category})
+        ing.update({'category' : category})
     return ingredients
+
 
 def remove_duplicates_by_id(ingredients):
     seen = set()
-    return [x for x in ingredients if x['ID'] not in seen and not seen.add(x['ID'])]
+    return [x for x in ingredients if x['id'] not in seen and not seen.add(x['id'])]
+
+
+def make_final_dict(baseid, category, color, ingredient):
+    return {'Name' : ingredient['name'], 'ID' : ingredient['id'], 'Color' : color, 'Category' : category, 'BaseID' : baseid}
+
+
+def convert_to_final(base_ingredient):
+    if 'color' in base_ingredient:
+        return [{'Name' : base_ingredient['name'], 'ID' : base_ingredient['id'], 'Color' : base_ingredient['color'], 'Category' : base_ingredient['category'], 'BaseID' : base_ingredient['id']}] +\
+               [make_final_dict(base_ingredient['id'], base_ingredient['category'], base_ingredient['color'], related) for related in base_ingredient['relatedIngredients']]
+    return [make_final_dict(base_ingredient['id'], base_ingredient['category'], "", related) for related in base_ingredient['relatedIngredients']]
+
 
 neutral_spirits = get_with_keywords(['gin', 'vodka', 'jenever'])
 neutral_spirits = add_color(neutral_spirits, 'light blue')
 
-print (neutral_spirits)
-print(len(neutral_spirits), len(filtered))
-
 liqueurs_and_schnapps = get_with_keywords(['liqueur', 'schnapps', 'amaro', 'picon', 'chartreuse', 'licor'])
 liqueurs_and_schnapps = add_color(liqueurs_and_schnapps, 'tan')
-
-print (liqueurs_and_schnapps)
-print(len(liqueurs_and_schnapps), len(filtered))
 
 whiskies = get_with_keywords(['whiskey', 'scotch', 'bourbon'])
 whiskies = add_color(whiskies, 'brown')
@@ -60,7 +80,7 @@ wine = add_color(wine, 'purple')
 brandy = get_all_with_keyword('brandy')
 brandy = add_color(brandy, 'brown')
 
-beer = [ing for ing in filtered if ('beer' in ing['Name'].lower() and ('root' not in ing['Name'].lower() and 'ginger' not in ing['Name'].lower() and ing not in liqueurs_and_schnapps))]
+beer = [ing for ing in filtered if ('beer' in ing['name'].lower() and ('root' not in ing['name'].lower() and 'ginger' not in ing['name'].lower() and ing not in liqueurs_and_schnapps))]
 beer = add_color(beer, 'brown')
 
 cachaca = get_all_with_keyword('cachaca')
@@ -75,7 +95,7 @@ fernet = add_color(fernet, 'purple')
 aquavit = get_all_with_keyword('aquavit')
 aquavit = add_color(aquavit, 'tan')
 
-champagne = [ing for ing in filtered if ('champagne' in ing['Name'].lower() and 'soda' not in ing['Name'].lower())]
+champagne = [ing for ing in filtered if ('champagne' in ing['name'].lower() and 'soda' not in ing['name'].lower())]
 champagne = add_color(champagne, 'yellow')
 
 arrack = get_all_with_keyword('arrack')
@@ -123,7 +143,6 @@ jager = add_color(jager, 'dark brown')
 alcohols = rum + whiskies + liqueurs_and_schnapps + neutral_spirits + wine + brandy + beer + cachaca + pisco + fernet + \
            aquavit + champagne + arrack + japanese_drinks + tequila + port + firewater + absinthe + mandarin_napoleon + cider + irish_mist + hard_lemonade + zima + taboo + vermouth + jager
 
-print (len(alcohols))
 
 soda = get_with_keywords(['soda', 'coke', 'grenadine'])
 soda = add_color(soda, 'dark red')
@@ -164,13 +183,22 @@ lemonade = add_color(lemonade, 'yellow')
 mello_yello = get_all_with_keyword('mello')
 mello_yello = add_color(mello_yello, 'yellow')
 
+sprite = get_all_with_keyword('sprite')
+sprite = add_color(sprite, 'light blue')
+
 tonic = get_all_with_keyword('tonic')
 tonic = add_color(tonic, 'light blue')
 
-mixers = soda + kool_aide + juice + mixes + milk + nectar + cream + hot_chocolate + ginger_shit + tea + soft_cider + lemonade + mello_yello + tonic
+mixers = soda + kool_aide + juice + mixes + milk + nectar + cream + hot_chocolate + ginger_shit + tea + soft_cider + lemonade + mello_yello + tonic + sprite
 mixers = [ing for ing in mixers if ing not in alcohols]
 
 others = [ing for ing in filtered if (ing not in mixers and ing not in alcohols)]
+
+print (alcohols)
+print (len(alcohols))
+print (len(mixers))
+print(len(others))
+print(len(filtered) - len(mixers + alcohols + others))
 
 mixers = remove_duplicates_by_id(mixers)
 alcohols = remove_duplicates_by_id(alcohols)
@@ -181,15 +209,25 @@ mixers = add_category(mixers, 1)
 others = add_category(others, 2)
 
 all = alcohols + mixers + others
+for i in range(0, len(all)):
+    all[i].update({'id': i})
+final_list = list()
+for item in all:
+    final_list = final_list + convert_to_final(item)
+for i in range(0, len(final_list)):
+    final_list[i].update({'ID' : i})
+
+base_ingredients = [{'ID' : ing['id'], 'Name' : ing['name'], 'Category' : ing['category']} for ing in all]
 
 print(all)
+print(final_list)
 print (len(all))
 
-print(lemonade)
-print (alcohols)
-print (len(mixers))
-print(len(others))
+
 print(len(filtered) - len(mixers + alcohols + others))
 
 with open('classified-ingredients.json', 'w') as outfile:
-    json.dump(all, outfile)
+    json.dump(final_list, outfile)
+
+with open('base-ingredients.json', 'w') as basefile:
+    json.dump(base_ingredients, basefile)
